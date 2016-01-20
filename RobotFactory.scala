@@ -17,13 +17,13 @@ case class Robot(brain: CyberBrain, body: Body)
 object Forgery {
 
   def forgeBrain(wires: Int, power: Int) =
-    if(power <= wires * 2) CyberBrain(Wires(wires), BrainCore(power)) else null
+    if(power <= wires * 2) Some(CyberBrain(Wires(wires), BrainCore(power))) else None
 
-  def forgeLowerBody(legs: Int) = if(legs < 1 || legs > 100) null else LowerBody(legs)
+  def forgeLowerBody(legs: Int) = if(legs < 1 || legs > 100) None else Some(LowerBody(legs))
 
-  def forgeUpperBody(arms: Int) = if(arms < 1) null else UpperBody(arms)
+  def forgeUpperBody(arms: Int) = if(arms < 1) None else Some(UpperBody(arms))
 
-  def forgeBody(lower: LowerBody, upper: UpperBody) = if(lower.numberOfLegs > upper.numberOfArms * 2) null else Body(lower, upper)
+  def forgeBody(lower: LowerBody, upper: UpperBody) = if(lower.numberOfLegs > upper.numberOfArms * 2) None else Some(Body(lower, upper))
 
 }
 
@@ -33,18 +33,23 @@ object Factory {
 
     import Forgery._
 
-    new Robot(forgeBrain(wires, corePower), forgeBody(forgeLowerBody(numberOfLegs), forgeUpperBody(numberOfArms)))
-
+    for {
+      brain <- forgeBrain(wires, corePower)
+      lower <- forgeLowerBody(numberOfLegs)
+      upper <- forgeUpperBody(numberOfArms)
+      body <- forgeBody(lower, upper)
+    } yield(Robot(brain, body))
   }
-
-
 }
 
 object TestRun extends App {
 
-  def testRun(robot: Robot) {
-    println(s"We've created: $robot")
-    println(s"Robot thinks that... ${robot.brain.use}")
+  def testRun(maybeRobot: Option[Robot]) = maybeRobot match {
+    case Some(robot) =>
+      println(s"We've created: $robot")
+      println(s"Robot thinks that... ${robot.brain.use}")
+    case None =>
+      println(s"Robot was not constructed, some invalid parameters...")
   }
 
   val robot1 = Factory(corePower = 10, wires = 5, numberOfLegs = 5, numberOfArms = 3)
