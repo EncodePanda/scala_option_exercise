@@ -42,7 +42,7 @@ object Factory {
 
 object TestRun extends App {
 
-  def testRun(robot: Robot) {
+  def testRun(robot: Robot) = {
     println(s"We've created: $robot")
     println(s"Robot thinks that... ${robot.brain.use}")
   }
